@@ -1,13 +1,6 @@
-import math
-import sys
-
-#hull = [(23.45, 57.39), (23.45, 60.39), (24.45, 63.39),
-        #(26.95, 68.39), (28.45, 69.89), (34.95, 71.89),
-        #(36.45, 71.89), (37.45, 70.39), (37.45, 64.89),
-        #(36.45, 63.39), (34.95, 61.39), (26.95, 57.89),
-        #(25.45, 57.39), (23.45, 57.39)]
-
-
+#Monotone Chain Convex Hull
+import sys;
+from time import time, clock
 
 result = []; f = open(sys.argv[1]); total_num = int(f.readline());
 
@@ -15,36 +8,47 @@ while total_num != 0:
     a = (f.readline().split())
     a = (int(a[0]), int(a[1]))   #  a[0] for X    a[1] for Y
     result.append(a); total_num -= 1;
-hull = result
+    
+t=clock()
+def Directed_Line_Segment(x1,x2,x3):
+    x_a = x1[0]; x_b = x2[0]; x_c = x3[0]
+    y_a = x1[1]; y_b = x2[1]; y_c = x3[1]
+    
+    Directed_Line_Segment = ((x_b - x_a) * (y_c - y_a)) - ((y_b - y_a) * (x_c - x_a))
+    return Directed_Line_Segment
 
-def mostfar(j, n, s, c, mx, my): # advance j to extreme point
-    xn, yn = hull[j][0], hull[j][1]
-    rx, ry = xn*c - yn*s, xn*s + yn*c
-    best = mx*rx + my*ry
-    while True:
-        x, y = rx, ry
-        xn, yn = hull[(j+1)%n][0], hull[(j+1)%n][1]
-        rx, ry = xn*c - yn*s, xn*s + yn*c
-        if mx*rx + my*ry >= best:
-            j = (j+1)%n
-            best = mx*rx + my*ry
-        else:
-            return (x, y, j)
+def convex_hull(result):
+    result = sorted(set(result))
+    if len(result) <= 1:
+        return result
+    LW = []; UP = []
+    for i in result:
+        while len(LW) >= 2 and Directed_Line_Segment(LW[-2], LW[-1], i) <= 0:
+            LW.pop()
+        LW.append(i)
+    for y in reversed(result):
+        while len(UP) >= 2 and Directed_Line_Segment(UP[-2], UP[-1], y) <= 0:
+            UP.pop()
+        UP.append(y)
+    return LW[:-1] + UP[:-1]
 
-n = len(hull)
-iL = iR = iP = 1                # indexes left, right, opposite
-pi = 4*math.atan(1)
-for i in range(n-1):
-    dx = hull[i+1][0] - hull[i][0]
-    dy = hull[i+1][1] - hull[i][1]
-    theta = pi-math.atan2(dy, dx)
-    s, c = math.sin(theta), math.cos(theta)
-    yC = hull[i][0]*s + hull[i][1]*c
+print (convex_hull(result))
+#
+# the real computing time should be after finish calculating the points
+# which is not include that index transction part so time counter should
+# put before the index transction part.
+# 
+print ('CPU time: ', clock()-t)
 
-    xP, yP, iP = mostfar(iP, n, s, c, 0, 1)
-    if i==0: iR = iP
-    xR, yR, iR = mostfar(iR, n, s, c,  1, 0)
-    xL, yL, iL = mostfar(iL, n, s, c, -1, 0)
-    area = (yP-yC)*(xR-xL)
+#  Translate the point coordinates to the key of original table
+result1=[]; UP = convex_hull(result)
 
-    print ('    {:2d} {:2d} {:2d} {:2d} {:9.3f}'.format(i, iL, iP, iR, area))
+for i in UP:
+    if len(result1) == 0:
+        result1.append(result.index(UP[0]))
+    elif result.index(i) not in result1:
+        result1.append(result.index(i))
+print (result1) #index
+
+
+
